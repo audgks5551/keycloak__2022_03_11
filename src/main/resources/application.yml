@@ -1,11 +1,13 @@
 server:
-  port: 8080
+  port: 8081
+  connection-timeout: 6000
 
 keycloak:
-  realm: javapuzzle
-  auth-server-url: http://localhost:8085
-  resource: my_client
-  public-client: true
+  realm: My-test-realm
+  auth-server-url: http://localhost:8888/auth
+  ssl-required: external
+  resource: my-test-client
+  use-resource-role-mappings: true
   bearer-only: true
 
 spring:

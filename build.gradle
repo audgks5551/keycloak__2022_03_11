@@ -25,6 +25,8 @@ dependencies {
 	implementation 'org.keycloak:keycloak-spring-boot-starter:17.0.0'
 	// https://mvnrepository.com/artifact/org.keycloak/keycloak-spring-security-adapter
 	implementation 'org.keycloak:keycloak-spring-security-adapter:17.0.0'
+	// https://mvnrepository.com/artifact/org.keycloak/keycloak-admin-client
+	implementation 'org.keycloak:keycloak-admin-client:17.0.0'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'mysql:mysql-connector-java'
