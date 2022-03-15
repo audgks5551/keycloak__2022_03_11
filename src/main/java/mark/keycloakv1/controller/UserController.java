@@ -14,6 +14,11 @@ import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
+import org.keycloak.authorization.client.AuthzClient;
+import org.keycloak.authorization.client.Configuration;
+import org.keycloak.representations.AccessToken;
+import org.keycloak.representations.AccessTokenResponse;
+import org.keycloak.representations.RefreshToken;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -24,6 +29,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -31,21 +38,30 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class UserController {
 
-    private String authServerUrl = "http://localhost:8888";
-    private String realm = "My-test-realm";
-    private String clientId = "my-test-client";
-    private String role = "student";
-    private String clientSecret = "dXKWStEHeR0W0NM9y2kB5UhekhUMScfR";
+    private String authServerUrl = "http://localhost:8888/auth/";
+    private String refreshTokenUrl = "http://localhost:8888/auth/realms/realmtest/protocol/openid-connect/token";
+    private String realm = "Realmtest";
+    private String clientId = "clienttest";
+    private String role = "ROLE_USER";
+    private String clientSecret = "fuHZFMvIqf5CvRw4gY0MSbfoZoS9GFHP";
 
     @PostMapping(path = "/create")
     public ResponseEntity<?> createUser(@RequestBody UserDTO userDTO) {
+
+        /**
+         * Keycloak 토큰 요청
+         */
         Keycloak keycloak = KeycloakBuilder.builder()
                 .serverUrl(authServerUrl)
-                .realm("master").clientId("admin-cli")
+                .realm("master")
+                .clientId("admin-cli")
+                .grantType(OAuth2Constants.PASSWORD)
                 .username("admin").password("admin")
                 .resteasyClient(new ResteasyClientBuilder().connectionPoolSize(10).build()).build();
 
         keycloak.tokenManager().getAccessToken();
+
+        System.out.println("keycloak = " + keycloak.toString());
 
         UserRepresentation user = new UserRepresentation();
         user.setEnabled(true);
@@ -54,10 +70,11 @@ public class UserController {
         user.setLastName(userDTO.getLastname());
         user.setEmail(userDTO.getEmail());
 
+        System.out.println("user = " + user);
+
         RealmResource realmResource = keycloak.realm(realm);
         UsersResource usersResource = realmResource.users();
         Response response = usersResource.create(user);
-
         userDTO.setStatusCode(response.getStatus());
         userDTO.setStatus(response.getStatusInfo().toString());
 
@@ -82,13 +99,47 @@ public class UserController {
         return ResponseEntity.ok(userDTO);
     }
 
-    @GetMapping("/user")
-    public ResponseEntity getUser() {
-        return ResponseEntity.ok("ok");
+    @PostMapping(path = "/login")
+    public ResponseEntity<?> login (@RequestBody UserDTO userDTO) {
+
+        Map<String, Object> clientCredentials = new HashMap<>();
+        clientCredentials.put("secret", clientSecret);
+        clientCredentials.put("grant_type", "password");
+
+        Configuration configuration =
+                new Configuration(authServerUrl, realm, clientId, clientCredentials, null);
+
+        AuthzClient authzClient = AuthzClient.create(configuration);
+
+        AccessTokenResponse response =
+                authzClient.obtainAccessToken(userDTO.getEmail(), userDTO.getPassword());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping(value = "/unprotected-data")
     public String getName() {
         return "Hello, this api is not protected.";
     }
+
+
+    @GetMapping(value = "/protected-data")
+    public String getEmail() {
+
+        return "Hello, this api is protected.";
+    }
+
+//    @PostMapping(value = "/protected-data")
+//    public String refresh_token(@RequestHeader("refresh_token") String refreshToken) {
+//        Keycloak keycloak = KeycloakBuilder.builder()
+//                .serverUrl(refreshTokenUrl)
+//                .clientId(clientId)
+//                .grantType(OAuth2Constants.REFRESH_TOKEN)
+//                .clientSecret(clientSecret)
+//                        .
+//
+//        keycloak.tokenManager().getAccessToken();
+//    }
+
+
 }

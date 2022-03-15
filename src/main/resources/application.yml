@@ -3,10 +3,10 @@ server:
   connection-timeout: 6000
 
 keycloak:
-  realm: My-test-realm
-  auth-server-url: http://localhost:8888/auth
+  realm: realmtest
+  auth-server-url: http://localhost:8888/auth/
   ssl-required: external
-  resource: my-test-client
+  resource: clienttest
   use-resource-role-mappings: true
   bearer-only: true
 
@@ -23,4 +23,4 @@ spring:
     generate-ddl: true
     show-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
